@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    restart: always
+    container_name: n8n
+    # RUN AS ROOT: Fixes all "Permission Denied" crashes instantly
+    user: root
+    ports:
+      # Expose to localhost so you can test with 'curl'
+      - "127.0.0.1:5678:5678"
+    environment:
+      - N8N_HOST=${DOMAIN_NAME}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - N8N_LISTEN_ADDRESS=0.0.0.0
+      - WEBHOOK_URL=https://${DOMAIN_NAME}/
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
+      - N8N_SECURE_COOKIE=false
+      - N8N_ENDPOINT_REST_CORS_ORIGIN=*
+      - N8N_ENDPOINT_REST_CORS_ALLOW_HEADERS=*
+      # Memory limits
+      - NODE_OPTIONS=--max-old-space-size=1200
+      - N8N_DIAGNOSTICS_ENABLED=false
+    volumes:
+      - ./n8n_data:/home/node/.n8n
+    depends_on:
+      - mongo
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: always
+    container_name: cloudflared
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARED_TOKEN}
+    depends_on:
+      - n8n
+
+  mongo:
+    image: mongo:6.0
+    restart: always
+    container_name: mongo
+    # Limit Cache
+    command: ["--wiredTigerCacheSizeGB", "0.25"]
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASS}
+    volumes:
+      - ./mongo_data:/data/db
