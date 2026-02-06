@@ -12,7 +12,7 @@ export const APP_CONFIG: N8nConfig = {
   
   // Your n8n Production URL (Hosted on AWS via Cloudflare Tunnel)
   // Ensure you append '/webhook'
-  webhookBaseUrl: "https://n8n.arcane.click/webhook",
+  webhookBaseUrl: "https://n8n.arcanes.click/webhook",
 };
 
 export const MOTIVATIONAL_QUOTES = [
