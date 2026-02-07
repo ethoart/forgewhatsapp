@@ -94,6 +94,15 @@
         "url": "http://waha:3000/api/sendFile",
         "sendBody": true,
         "contentType": "json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "secret123"
+            }
+          ]
+        },
         "bodyParameters": {
           "parameters": [
             {

@@ -2,8 +2,14 @@ import { Handler } from '@netlify/functions';
 import clientPromise from './lib/mongo';
 
 export const handler: Handler = async (event, context) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json'
+  };
+
   if (event.httpMethod !== 'GET') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return { statusCode: 405, headers, body: 'Method Not Allowed' };
   }
 
   try {
@@ -11,14 +17,12 @@ export const handler: Handler = async (event, context) => {
     const db = client.db("whatsdoc");
     const collection = db.collection("customers");
 
-    // Fetch pending requests, sorted by oldest first
     const pending = await collection
       .find({ status: 'pending' })
       .sort({ requestedAt: 1 })
       .limit(100)
       .toArray();
 
-    // Transform _id to id for frontend
     const results = pending.map(doc => ({
       id: doc._id.toString(),
       customerName: doc.customerName,
@@ -30,12 +34,19 @@ export const handler: Handler = async (event, context) => {
 
     return {
       statusCode: 200,
+      headers,
       body: JSON.stringify(results),
-      headers: { 'Content-Type': 'application/json' }
     };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Database Error:", error);
-    return { statusCode: 500, body: 'Internal Server Error' };
+    return { 
+      statusCode: 500, 
+      headers,
+      body: JSON.stringify({ 
+        error: error.message || 'Internal Server Error',
+        details: 'Check Netlify logs or AWS Security Group (Port 27017)'
+      }) 
+    };
   }
 };
