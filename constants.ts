@@ -7,12 +7,13 @@ import { N8nConfig } from './types';
 // ------------------------------------------------------------------
 
 export const APP_CONFIG: N8nConfig = {
-  // Set to FALSE to connect to your real n8n server on AWS
+  // Set to FALSE to connect to your real n8n server
   useMockMode: false, 
   
-  // Your n8n Production URL (Hosted on AWS via Cloudflare Tunnel)
-  // Ensure you append '/webhook'
-  webhookBaseUrl: "https://n8n.arcanes.click/webhook",
+  // CORS FIX: We now use "/api" instead of the full URL.
+  // Netlify will forward this to your AWS server automatically.
+  // See: netlify.toml
+  webhookBaseUrl: "/api",
 };
 
 export const MOTIVATIONAL_QUOTES = [

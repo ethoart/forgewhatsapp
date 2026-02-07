@@ -1,0 +1,21 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# --- PROXY CONFIGURATION (CORS FIX) ---
+# This tells Netlify: "When someone visits /api, send them to AWS n8n secretly."
+# The browser thinks it's staying on Netlify, so it doesn't block the request.
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://n8n.arcane.click/webhook/:splat"
+  status = 200
+  force = true
+
+# --- SPA FALLBACK ---
+# This ensures refreshing the page on /register doesn't give a 404.
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

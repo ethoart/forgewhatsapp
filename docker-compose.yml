@@ -5,10 +5,10 @@ services:
     image: n8nio/n8n:latest
     restart: always
     container_name: n8n
-    # RUN AS ROOT: Fixes all "Permission Denied" crashes instantly
+    # RUN AS ROOT: Critical to avoid permission 502 errors
     user: root
     ports:
-      # Expose to localhost so you can test with 'curl'
+      # Expose locally for debugging (curl localhost:5678)
       - "127.0.0.1:5678:5678"
     environment:
       - N8N_HOST=${DOMAIN_NAME}
@@ -20,13 +20,34 @@ services:
       - N8N_SECURE_COOKIE=false
       - N8N_ENDPOINT_REST_CORS_ORIGIN=*
       - N8N_ENDPOINT_REST_CORS_ALLOW_HEADERS=*
-      # Memory limits
-      - NODE_OPTIONS=--max-old-space-size=1200
+      - NODE_OPTIONS=--max-old-space-size=1024
       - N8N_DIAGNOSTICS_ENABLED=false
     volumes:
       - ./n8n_data:/home/node/.n8n
     depends_on:
       - mongo
+      - waha
+
+  # NEW: WhatsApp HTTP API (Self-Hosted)
+  waha:
+    image: devlikeapro/waha:latest
+    restart: always
+    container_name: waha
+    environment:
+      # Use the lightweight web version
+      - WHATSAPP_DEFAULT_ENGINE=WEBJS
+      # Print QR to logs (useful for debugging)
+      - WAHA_PRINT_QR=true
+      # Don't store media files to save space
+      - WAHA_NO_FILES=true
+      # Session name
+      - WAHA_WORKER_ID=default
+    volumes:
+      # Persist login session
+      - ./waha_data:/app/.waha
+    ports:
+      # Expose for Dashboard/QR Scan
+      - "127.0.0.1:3000:3000"
 
   cloudflared:
     image: cloudflare/cloudflared:latest
@@ -37,12 +58,13 @@ services:
       - TUNNEL_TOKEN=${CLOUDFLARED_TOKEN}
     depends_on:
       - n8n
+      - waha
 
   mongo:
     image: mongo:6.0
     restart: always
     container_name: mongo
-    # Limit Cache
+    # Limit MongoDB cache to 256MB to save RAM
     command: ["--wiredTigerCacheSizeGB", "0.25"]
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}

@@ -43,6 +43,7 @@ export const registerCustomer = async (
   } else {
     // REAL N8N CALL
     try {
+      // NOTE: We rely on Netlify Proxy (defined in netlify.toml) to handle CORS.
       const response = await fetch(`${APP_CONFIG.webhookBaseUrl}/register-customer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -70,11 +71,19 @@ export const getPendingRequests = async (): Promise<CustomerRequest[]> => {
       .sort((a, b) => new Date(a.requestedAt).getTime() - new Date(b.requestedAt).getTime());
   } else {
     // REAL N8N CALL
-    // You need a GET webhook in n8n that returns the database rows
     try {
       const response = await fetch(`${APP_CONFIG.webhookBaseUrl}/get-pending`);
-      const data = await response.json();
-      return data;
+      
+      // Safety check: Ensure we got JSON back.
+      // If the proxy fails (404/500), it often returns HTML.
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") !== -1) {
+        const data = await response.json();
+        return data;
+      } else {
+        console.warn("Received non-JSON response from server", await response.text());
+        return [];
+      }
     } catch (error) {
       console.error("API Error", error);
       return [];
