@@ -4,7 +4,7 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "register-customer",
-        "responseMode": "onReceived",
+        "responseMode": "responseNode",
         "options": {}
       },
       "name": "Webhook Register",
@@ -14,14 +14,45 @@
     },
     {
       "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "pending"
+            },
+            {
+              "name": "requestedAt",
+              "value": "={{new Date().toISOString()}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Defaults",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
         "operation": "insert",
         "collection": "customers",
-        "fields": "name, phone, videoName, status, requestedAt",
         "options": {}
       },
       "name": "Mongo Insert",
       "type": "n8n-nodes-base.mongoDb",
-      "position": [300, 300]
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": true, \"id\": \"{{$json._id}}\" }",
+        "options": {}
+      },
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [600, 300]
     },
     {
       "parameters": {
@@ -67,7 +98,7 @@
           "parameters": [
             {
               "name": "chatId",
-              "value": "={{$json.phone.replace('+', '')}}@c.us"
+              "value": "={{$json.phone.replace('+', '').replace('-', '')}}@c.us"
             },
             {
               "name": "caption",
@@ -104,19 +135,6 @@
     },
     {
        "parameters": {
-          "operation": "find",
-          "collection": "customers",
-          "query": "{ \"status\": \"pending\" }",
-          "options": {
-             "limit": 50
-          }
-       },
-       "name": "Get Pending",
-       "type": "n8n-nodes-base.mongoDb",
-       "position": [300, 700]
-    },
-    {
-       "parameters": {
           "httpMethod": "GET",
           "path": "get-pending",
           "responseMode": "responseNode",
@@ -126,6 +144,20 @@
        "type": "n8n-nodes-base.webhook",
        "typeVersion": 1,
        "position": [100, 700]
+    },
+    {
+       "parameters": {
+          "operation": "find",
+          "collection": "customers",
+          "query": "{ \"status\": \"pending\" }",
+          "options": {
+             "limit": 50,
+             "sort": { "requestedAt": 1 }
+          }
+       },
+       "name": "Get Pending",
+       "type": "n8n-nodes-base.mongoDb",
+       "position": [300, 700]
     },
     {
        "parameters": {
@@ -141,7 +173,13 @@
   ],
   "connections": {
     "Webhook Register": {
+      "main": [[{"node": "Set Defaults", "type": "main", "index": 0}]]
+    },
+    "Set Defaults": {
       "main": [[{"node": "Mongo Insert", "type": "main", "index": 0}]]
+    },
+    "Mongo Insert": {
+      "main": [[{"node": "Respond Success", "type": "main", "index": 0}]]
     },
     "Webhook Upload": {
       "main": [[{"node": "Mongo Find Match", "type": "main", "index": 0}]]

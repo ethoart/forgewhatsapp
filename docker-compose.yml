@@ -42,6 +42,11 @@ services:
       - WAHA_NO_FILES=true
       # Session name
       - WAHA_WORKER_ID=default
+      # --- DASHBOARD CREDENTIALS ---
+      - WAHA_DASHBOARD_USERNAME=admin
+      - WAHA_DASHBOARD_PASSWORD=secret123
+      # REMOVED API KEY to fix 401 errors. 
+      # Now relies on Dashboard Auth for UI, and open API for n8n (internal).
     volumes:
       # Persist login session
       - ./waha_data:/app/.waha

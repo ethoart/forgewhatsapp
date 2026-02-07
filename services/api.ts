@@ -49,9 +49,15 @@ export const registerCustomer = async (
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, phone, videoName }),
       });
-      return response.ok;
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`API Error (${response.status}):`, errorText);
+        return false;
+      }
+      return true;
     } catch (error) {
-      console.error("API Error", error);
+      console.error("Network Error", error);
       return false;
     }
   }
