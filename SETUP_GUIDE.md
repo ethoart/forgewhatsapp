@@ -23,7 +23,7 @@ Since Netlify needs to talk to your server's database, we must open the port.
     *   Select your instance -> Click **Security** tab -> Click the **Security Group** link.
     *   **Edit Inbound Rules** -> **Add Rule**.
     *   **Type**: Custom TCP
-    MONGODB_URI*   **Port Range**: `27017`
+    *   **Port Range**: `27017`
     *   **Source**: `0.0.0.0/0` (Anywhere).
     *   *Note: Since Netlify uses dynamic IPs, we must allow all. Ensure your MongoDB password in `.env` is STRONG.*
     *   **Save Rules**.
@@ -43,7 +43,7 @@ Since Netlify needs to talk to your server's database, we must open the port.
 2.  **Go to Netlify**:
     *   **Site Settings** -> **Environment Variables**.
     *   Add/Update Variable:
-        *   **Key**: ``
+        *   **Key**: `MONGODB_URI`
         *   **Value**: (Paste the string from above)
 3.  **Redeploy** your site.
 
