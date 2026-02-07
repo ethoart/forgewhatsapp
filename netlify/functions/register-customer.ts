@@ -2,7 +2,7 @@ import { Handler } from '@netlify/functions';
 import clientPromise from './lib/mongo';
 
 export const handler: Handler = async (event, context) => {
-  // CORS Headers to allow access from any domain (optional but good for safety)
+  // CORS Headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -25,12 +25,20 @@ export const handler: Handler = async (event, context) => {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing required fields' }) };
     }
 
-    console.log("Connecting to MongoDB...");
+    // DEBUG LOGGING
+    console.log("Attempting MongoDB Connection...");
+    if (process.env.MONGODB_URI) {
+      // Log obscured URI to confirm it's loaded
+      console.log("URI Configured:", process.env.MONGODB_URI.replace(/:([^:@]+)@/, ':****@'));
+    } else {
+      console.error("CRITICAL: MONGODB_URI is missing from Netlify Environment Variables");
+    }
+
     const client = await clientPromise;
     const db = client.db("whatsdoc");
     const collection = db.collection("customers");
 
-    console.log("Inserting customer...");
+    console.log("Inserting customer:", name);
     const newCustomer = {
       customerName: name,
       phoneNumber: phone,
@@ -50,14 +58,18 @@ export const handler: Handler = async (event, context) => {
   } catch (error: any) {
     console.error("Database Error Detail:", error);
     
-    // RETURN THE ACTUAL ERROR MESSAGE TO THE FRONTEND
-    // This helps debug Firewall/Connection issues immediately.
+    // Check for timeout specific errors
+    const isTimeout = error.message?.includes('timed out') || error.message?.includes('Server selection');
+    const errorMessage = isTimeout 
+      ? 'Connection Timed Out. Please check your AWS Security Group allows Port 27017 from 0.0.0.0/0'
+      : (error.message || 'Internal Server Error');
+
     return { 
       statusCode: 500, 
       headers,
       body: JSON.stringify({ 
-        error: error.message || 'Internal Server Error',
-        details: 'Check Netlify logs or AWS Security Group (Port 27017)'
+        error: errorMessage,
+        originalError: error.message
       }) 
     };
   }
