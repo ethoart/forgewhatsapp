@@ -1,20 +1,24 @@
 [build]
   command = "npm run build"
   publish = "dist"
+  functions = "netlify/functions"
 
-# --- PROXY CONFIGURATION (CORS FIX) ---
-# This tells Netlify: "When someone visits /api, send them to AWS n8n secretly."
-# The browser thinks it's staying on Netlify, so it doesn't block the request.
+# --- PROXY CONFIGURATION ---
+# 1. /api/upload-document -> Sends to n8n (AWS) for processing & WhatsApp sending
+[[redirects]]
+  from = "/api/upload-document"
+  to = "https://n8n.arcanes.click/webhook/upload-document"
+  status = 200
+  force = true
 
+# 2. All other /api calls -> Handled by Netlify Functions (Serverless)
 [[redirects]]
   from = "/api/*"
-  to = "https://n8n.arcanes.click/webhook/:splat"
+  to = "/.netlify/functions/:splat"
   status = 200
   force = true
 
 # --- SPA FALLBACK ---
-# This ensures refreshing the page on /register doesn't give a 404.
-
 [[redirects]]
   from = "/*"
   to = "/index.html"
