@@ -8,7 +8,7 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "https://n8n.arcane.click/webhook/:splat"
+  to = "https://n8n.arcanes.click/webhook/:splat"
   status = 200
   force = true
 
